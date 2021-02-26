@@ -122,6 +122,7 @@ export class Actor extends EventEmitter {
 
     public handleSubscription(document: SubscribeCommand) {
         this.subscriptions[document.params.webhook] = document;
+        this.emit("subscription", document);
     }
 
     public relayToSubscription(
