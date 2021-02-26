@@ -61,12 +61,7 @@ export class Actor extends EventEmitter {
                 endpoints.forEach((endpoint) => {
                     const subscription = this.subscriptions[endpoint];
                     if (schematype === subscription.params.schemaType) {
-                        const query = new Mingo.Query(
-                            subscription.params.query || {}
-                        );
-                        if (query.test(doc)) {
-                            this.relaySubscription(doc, subscription);
-                        }
+                        this.relayToSubscription(doc, subscription);
                     }
                 });
                 if (schemaConfig.onIncoming) {
@@ -129,11 +124,14 @@ export class Actor extends EventEmitter {
         this.subscriptions[document.params.webhook] = document;
     }
 
-    public relaySubscription(
+    public relayToSubscription(
         document: SchemaType,
         subscription: SubscribeCommand
     ) {
-        return this.sendDocument(subscription.params.webhook, document);
+        const query = new Mingo.Query(subscription.params.query || {});
+        if (query.test(document)) {
+            return this.sendDocument(subscription.params.webhook, document);
+        }
     }
 
     public sendDocument(targetUrl: string, document: SchemaType) {
