@@ -31,7 +31,7 @@ interface SubscribeCommand extends Command {
         throttle?: number;
         maxSize?: number;
         hydrate?: boolean;
-        query: Dict<any>;
+        query?: Dict<any>;
     };
 }
 
@@ -110,13 +110,13 @@ export class Actor extends EventEmitter {
     }
 
     public registerSubscriptionHandler(schemaType: string) {
-        this.addListener("command", (document: Command) => {
+        this.addListener("command", (document: SubscribeCommand) => {
             if (
                 document.command === "subscribe" &&
                 document.params.schemaType === schemaType
             ) {
                 console.log("incoming subscription ", document);
-                this.handleSubscription(document as any);
+                this.handleSubscription(document);
             }
         });
     }
@@ -147,12 +147,17 @@ export class Actor extends EventEmitter {
         });
     }
 
-    public subscribe(targetUrl: string, schemaType: string) {
+    public subscribe(
+        targetUrl: string,
+        schemaType: string,
+        params: Partial<SubscribeCommand["params"]> = {}
+    ) {
         return this.sendDocument(`${targetUrl}/command`, {
             command: "subscribe",
             params: {
                 schemaType,
                 webhook: `${this.options.endpoint}/${schemaType}`,
+                ...params,
             },
             schemaType: "command",
             token: "",
