@@ -7,7 +7,7 @@ type Dict<T> = Record<string, T>;
 
 interface SchemaTypeConfig<D> {
     webhook: boolean;
-    onIncoming: (document: D, actor: Actor) => any;
+    onIncoming: (documents: D[], actor: Actor) => any;
     persist?: boolean;
     allowSubscribe?: boolean;
 }
@@ -23,7 +23,7 @@ export interface Command extends SchemaType {
     token: string;
 }
 
-interface SubscribeCommand extends Command {
+export interface SubscribeCommand extends Command {
     command: "subscribe";
     params: {
         webhook: string;
@@ -56,16 +56,16 @@ export class Actor extends EventEmitter {
         Object.keys(this.config).forEach((schematype) => {
             const schemaConfig = this.config[schematype];
             router.post(`/${schematype}`, async (req, res) => {
-                const doc = req.body as SchemaType;
+                const docs = req.body as SchemaType[];
                 const endpoints = Object.keys(this.subscriptions);
                 endpoints.forEach((endpoint) => {
                     const subscription = this.subscriptions[endpoint];
                     if (schematype === subscription.params.schemaType) {
-                        this.relayToSubscription(doc, subscription);
+                        this.relayToSubscription(docs, subscription);
                     }
                 });
                 if (schemaConfig.onIncoming) {
-                    const result = await schemaConfig.onIncoming(doc, this);
+                    const result = await schemaConfig.onIncoming(docs, this);
                     res.json(result || null);
                 }
                 res.end();
@@ -95,9 +95,9 @@ export class Actor extends EventEmitter {
 
     public registerCommandHandler() {
         this.register<Command>("command", {
-            onIncoming: (document, self) => {
-                console.log("incoming command", document.command);
-                this.emit("command", document);
+            onIncoming: (documents, self) => {
+                console.log("incoming commands", documents.length);
+                documents.forEach((document) => this.emit("command", document));
             },
             persist: false,
             webhook: true,
@@ -125,19 +125,20 @@ export class Actor extends EventEmitter {
     }
 
     public relayToSubscription(
-        document: SchemaType,
+        documents: SchemaType[],
         subscription: SubscribeCommand
     ) {
         const query = new Mingo.Query(subscription.params.query || {});
-        if (query.test(document)) {
-            return this.sendDocument(subscription.params.webhook, document);
+        const matching = documents.filter((doc) => query.test(doc));
+        if (matching.length) {
+            return this.sendDocuments(subscription.params.webhook, matching);
         }
     }
 
-    public sendDocument(targetUrl: string, document: SchemaType) {
+    public sendDocuments(targetUrl: string, documents: SchemaType[]) {
         console.log("send to ", targetUrl);
         return fetch(targetUrl, {
-            body: JSON.stringify(document),
+            body: JSON.stringify(documents),
             headers: {
                 "content-type": "application/json",
             },
@@ -150,16 +151,18 @@ export class Actor extends EventEmitter {
         schemaType: string,
         params: Partial<SubscribeCommand["params"]> = {}
     ) {
-        return this.sendDocument(`${targetUrl}/command`, {
-            command: "subscribe",
-            params: {
-                schemaType,
-                webhook: `${this.options.endpoint}/${schemaType}`,
-                ...params,
+        return this.sendDocuments(`${targetUrl}/command`, [
+            {
+                command: "subscribe",
+                params: {
+                    schemaType,
+                    webhook: `${this.options.endpoint}/${schemaType}`,
+                    ...params,
+                },
+                schemaType: "command",
+                token: "",
             },
-            schemaType: "command",
-            token: "",
-        });
+        ]);
     }
 }
 
