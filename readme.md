@@ -4,6 +4,34 @@ Actor module, handling actor communication and subscriptions
 
 to use as module in a project, clone the repository locall, then use `npm install ../module-actor`, which installs the module as a file reference
 
+# usage
+
+create a new actor and tell it where it is mounted
+
+```typescript
+const actor = new Actor({
+    endpoint: `http://localhost:${port}${mountpoint}`,
+});
+```
+
+then use in express server
+
+```typescript
+server.use(mountpoint, actor.middleware);
+```
+
+## `register`
+
+registers a schemaType, give it a callback to handle incoming documents (for example to store them in a database), optionally allow subscriptions for that schematype
+
+## `on`
+
+register an event listener
+
+## `subscribe`
+
+subscribe as a webhook to another actor. That other actor will send documents to own endpoints
+
 # Actor communication
 
 All actors have endpoints for schematypes they can handle. Example is the Command Actor
@@ -56,7 +84,11 @@ The command actor is somewhat special, as it handles `command` schematypes. It a
 
 Each actor automatically registers an endpoint for the `command` schematype.
 
-The command actor also registers a subscription handler for the `command` schematype, meaning it responds to commands with the command `subscribe` for the schematype `command`.
+The command actor also registers a subscription handler for the `command` schematype, meaning it responds to commands with the command `subscribe` for the schematype `command`. Most other actors typically do not do this
+
+```typescript
+actor.registerSubscriptionHandler("command");
+```
 
 In other words, actors can react to commands. A `subscribe` command is one such command, subscribing to documents of a particular schematype. In this case, the command actor handles subscriptions to new `command` documents.
 
