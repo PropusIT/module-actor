@@ -48,6 +48,48 @@ We have 3 actors:
 -   `F -> A` POST /actor/form: Form Actor sends currently stored forms matching query to Aggregator
 -   `F -> A` POST /actor/form: when user creates a new form, these are forwarded to the Aggregator
 
+# other scenarios
+
+## Actor is the command actor
+
+The command actor is somewhat special, as it handles `command` schematypes. It acts as a central server and other actors may use this for discovery purposes if they don't have knowledge of the ecosystem.
+
+Each actor automatically registers an endpoint for the `command` schematype.
+
+The command actor also registers a subscription handler for the `command` schematype, meaning it responds to commands with the command `subscribe` for the schematype `command`.
+
+In other words, actors can react to commands. A `subscribe` command is one such command, subscribing to documents of a particular schematype. In this case, the command actor handles subscriptions to new `command` documents.
+
+In yet other words, this server reacts when other actors subscribe to `command` documents. It does so by relaying incoming commands to the webhook indicated by the subscription (if queries match). Also it may burst persisted commands if indicated by the remote actor
+
+## Actor comes online
+
+Any actor typically registers a schematype that the actor cares about. For example, the `form` actor registers a `form` schematype, meaning it can receive forms via a `/forms` endpoint. If indicated by the registration, the actor also starts listening to incoming `subscribe` commands for the schematype:
+
+```typescript
+actor.register("form", {
+    onIncoming: (document) => {
+        console.log("incoming form");
+        // store locally
+    },
+    webhook: true,
+    allowSubscribe: true, // also listen to incoming subscriptions on forms
+});
+```
+
+Listening to `subscribe` commands happens on the (automatically created) `/command` endpoint. These commands may be sent directly ("consiously") by remote actors if they know the endpoint url.
+
+However, a more common scenario is that remote actors do not know the endpoint url, so the send the command to the command server, which relays it as described above.
+
+In order to receive those commands, the actor needs to subscribe to them at the command server:
+
+```typescript
+actor.subscribe(commandServer, "command", {
+    hydrate: true,
+    query: { command: "subscribe", "params.schemaType": "form" },
+});
+```
+
 # project setup
 
 followed https://www.twilio.com/blog/2017/06/writing-a-node-module-in-typescript.html for project setup
