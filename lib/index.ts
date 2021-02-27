@@ -12,6 +12,10 @@ interface SchemaTypeConfig<D> {
     allowSubscribe?: boolean;
 }
 
+interface SubscriptionHandlerOptions<D extends SchemaType = SchemaType> {
+    hydrate?: (subscription: SubscribeCommand) => D[];
+}
+
 interface SchemaType extends Dict<any> {
     schemaType: string;
 }
@@ -104,7 +108,10 @@ export class Actor extends EventEmitter {
         });
     }
 
-    public registerSubscriptionHandler(schemaType: string) {
+    public registerSubscriptionHandler<D extends SchemaType = SchemaType>(
+        schemaType: string,
+        options: SubscriptionHandlerOptions<D> = {}
+    ) {
         this.addListener("command", (document: SubscribeCommand) => {
             if (
                 document.command === "subscribe" &&
@@ -112,6 +119,10 @@ export class Actor extends EventEmitter {
             ) {
                 console.log("incoming subscription ", document);
                 this.handleSubscription(document);
+                if (options.hydrate && document.params.hydrate) {
+                    let docs = options.hydrate(document);
+                    this.relayToSubscription(docs, document);
+                }
             }
         });
     }
