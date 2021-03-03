@@ -1,5 +1,5 @@
 {
-    "name": "module-actor",
+    "name": "@PropusIT/module-actor",
     "version": "1.0.0",
     "description": "Actor module, handling actor communication and subscriptions",
     "main": "dist/index.js",
