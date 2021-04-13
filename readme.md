@@ -22,15 +22,19 @@ server.use(mountpoint, actor.middleware);
 
 ## `register`
 
-registers a schemaType, give it a callback to handle incoming documents (for example to store them in a database), optionally allow subscriptions for that schematype
+registers a schemaType, give it a callback to handle incoming documents (for example to store them in a database). When the allowSubscibe flag is set, it allows incoming subscription commands to that schemaType (if the command handler is registered)
+
+## `registerCommandHandler`
+
+registers the command handler. This creates an endpoint for commands and emits a `command` event when commands are received. It calls `register` under the hood. This is automatically called when an Actor is created.
 
 ## `on`
 
-register an event listener
+register an event listener. One such event is the "command" event as command documents come in
 
 ## `subscribe`
 
-subscribe as a webhook to another actor. That other actor will send documents to own endpoints
+subscribe as a webhook to another actor. That other actor will send documents to own endpoints. If there is a command actor, there is no need to find out to which actor to subscribe, unless you have one in mind specifically, as the command actor will relay the subscription
 
 # Actor communication
 
