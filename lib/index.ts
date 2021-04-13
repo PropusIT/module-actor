@@ -13,7 +13,7 @@ interface SchemaTypeConfig<D> {
 }
 
 interface SubscriptionHandlerOptions<D extends SchemaType = SchemaType> {
-    hydrate?: (subscription: SubscribeCommand) => D[];
+    hydrate?: (subscription: SubscribeCommand) => D[] | Promise<D[]>;
 }
 
 interface SchemaType extends Dict<any> {
