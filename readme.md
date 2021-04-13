@@ -129,3 +129,14 @@ actor.subscribe(commandServer, "command", {
 # project setup
 
 followed https://www.twilio.com/blog/2017/06/writing-a-node-module-in-typescript.html for project setup
+
+# version history
+
+## 1.1.0
+
+- added functional `hydrate` option to `registerSubscriptionHandler`. When this flag is set, the function is called on an incoming subscription. The function is expected to return an array of documents (possibly async) which are then sent to the subscriber.
+- extracted sendCommand method
+
+## 1.0.0
+
+- initial release
