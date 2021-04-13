@@ -183,6 +183,17 @@ export class Actor extends EventEmitter {
     }
 
     /**
+     * sends a command to another server, which is just a special kind of document
+     * calls sendDocuments under the hood
+     */
+    public sendCommand(targetUrl: string, command: string, params: Dict<any>, token: string) {
+        let commandDoc: Command = {
+            command, params, token, schemaType:'command'
+        }
+        return this.sendDocuments(`${targetUrl}/command`, [commandDoc]);
+    }
+
+    /**
      * subscribe to documents of another actor
      * note that these can be command documents (commands) as well
      * @param targetUrl 
@@ -194,18 +205,11 @@ export class Actor extends EventEmitter {
         schemaType: string,
         params: Partial<SubscribeCommand["params"]> = {}
     ) {
-        return this.sendDocuments(`${targetUrl}/command`, [
-            {
-                command: "subscribe",
-                params: {
-                    schemaType,
-                    webhook: `${this.options.endpoint}/${schemaType}`,
-                    ...params,
-                },
-                schemaType: "command",
-                token: "",
-            },
-        ]);
+        return this.sendCommand(targetUrl, 'subscribe', {
+            schemaType,
+            webhook: `${this.options.endpoint}/${schemaType}`,
+            ...params,
+        },'')
     }
 }
 
