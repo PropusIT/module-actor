@@ -87,6 +87,12 @@ export class Actor extends EventEmitter {
         return router;
     }
 
+    /**
+     * registers a schematype. This creates an api endpoint on the actor where
+     * documents of that schematype can be send to.
+     * @param schemaType 
+     * @param config 
+     */
     public register<D extends SchemaType>(
         schemaType: D["schemaType"],
         config: SchemaTypeConfig<D>
@@ -97,31 +103,49 @@ export class Actor extends EventEmitter {
         }
     }
 
+    /**
+     * registers a command endpoint, so the actor can receive commands
+     * it calls `register` under the hood and adds a handler that emits a "command" event
+     */
     public registerCommandHandler() {
         this.register<Command>("command", {
-            onIncoming: (documents, self) => {
-                console.log("incoming commands", documents.length);
-                documents.forEach((document) => this.emit("command", document));
+            onIncoming: (commandDocuments, self) => {
+                console.log("incoming commands", commandDocuments.length);
+                commandDocuments.forEach((document) => this.emit("command", document));
             },
             persist: false,
             webhook: true,
         });
     }
 
+    /**
+     * registers an event handler to incoming subscription commands. These are commands
+     * of type `subscribe`, called subscriptions.
+     * 
+     * if the subscription has the `hydrate` option set to a function, it is called
+     * when the subscription arrives. The function should return an array of documents
+     * which are then sent to the subscription endpoint
+     * 
+     * when new documents are received, they are also relayed to the subscriptions,
+     * if the query matches
+     * 
+     * @param schemaType 
+     * @param options 
+     */
     public registerSubscriptionHandler<D extends SchemaType = SchemaType>(
         schemaType: string,
         options: SubscriptionHandlerOptions<D> = {}
     ) {
-        this.addListener("command", (document: SubscribeCommand) => {
+        this.addListener("command", (subscription: SubscribeCommand) => {
             if (
-                document.command === "subscribe" &&
-                document.params.schemaType === schemaType
+                subscription.command === "subscribe" &&
+                subscription.params.schemaType === schemaType
             ) {
-                console.log("incoming subscription ", document);
-                this.handleSubscription(document);
-                if (options.hydrate && document.params.hydrate) {
-                    let docs = options.hydrate(document);
-                    this.relayToSubscription(docs, document);
+                console.log("incoming subscription ", subscription);
+                this.handleSubscription(subscription);
+                if (options.hydrate && subscription.params.hydrate) {
+                    let docs = options.hydrate(subscription);
+                    this.relayToSubscription(docs, subscription);
                 }
             }
         });
@@ -158,6 +182,13 @@ export class Actor extends EventEmitter {
         });
     }
 
+    /**
+     * subscribe to documents of another actor
+     * note that these can be command documents (commands) as well
+     * @param targetUrl 
+     * @param schemaType 
+     * @param params 
+     */
     public subscribe(
         targetUrl: string,
         schemaType: string,
