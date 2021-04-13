@@ -136,7 +136,7 @@ export class Actor extends EventEmitter {
         schemaType: string,
         options: SubscriptionHandlerOptions<D> = {}
     ) {
-        this.addListener("command", (subscription: SubscribeCommand) => {
+        this.addListener("command", async (subscription: SubscribeCommand) => {
             if (
                 subscription.command === "subscribe" &&
                 subscription.params.schemaType === schemaType
@@ -144,7 +144,7 @@ export class Actor extends EventEmitter {
                 console.log("incoming subscription ", subscription);
                 this.handleSubscription(subscription);
                 if (options.hydrate && subscription.params.hydrate) {
-                    let docs = options.hydrate(subscription);
+                    let docs = await options.hydrate(subscription);
                     this.relayToSubscription(docs, subscription);
                 }
             }
