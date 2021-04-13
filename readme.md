@@ -2,7 +2,17 @@
 
 Actor module, handling actor communication and subscriptions
 
-to use as module in a project, clone the repository locall, then use `npm install ../module-actor`, which installs the module as a file reference
+to use as module in a project:
+
+- add local `.npmrc` file and supply your auth token:
+- add `.npmrc` to your `gitignore` file (never put auth tokens in version control)
+
+```
+//npm.pkg.github.com/:_authToken=[auth token]
+registry=https://npm.pkg.github.com/propusit 
+```
+
+- npm install @propusit/module-actor
 
 # usage
 
