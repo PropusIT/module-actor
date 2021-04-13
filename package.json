@@ -1,5 +1,5 @@
 {
-    "name": "@PropusIT/module-actor",
+    "name": "@propusit/module-actor",
     "version": "1.1.0",
     "description": "Actor module, handling actor communication and subscriptions",
     "main": "dist/index.js",
@@ -23,7 +23,7 @@
         "mingo": "^4.1.2",
         "node-fetch": "^2.6.1"
     },
-        "publishConfig": {
+    "publishConfig": {
         "registry": "https://npm.pkg.github.com"
     }
 }
