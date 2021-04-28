@@ -89,7 +89,7 @@ export class Actor extends EventEmitter {
 
     /**
      * registers a schematype. This creates an api endpoint on the actor where
-     * documents of that schematype can be send to.
+     * documents of that schematype can be sent to.
      * @param schemaType 
      * @param config 
      */
