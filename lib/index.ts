@@ -20,24 +20,26 @@ interface SchemaType extends Dict<any> {
     schemaType: string;
 }
 
-export interface Command extends SchemaType {
-    command: string;
-    params: Dict<any>;
+export interface Command<C extends string = string, P = Dict<any>>
+    extends SchemaType {
+    command: C;
+    params: P;
     schemaType: "command";
     token: string;
+    timestamp: number;
 }
 
-export interface SubscribeCommand extends Command {
-    command: "subscribe";
-    params: {
+export type SubscribeCommand = Command<
+    "subscribe",
+    {
         webhook: string;
         schemaType: string;
         throttle?: number;
         maxSize?: number;
         hydrate?: boolean;
         query?: Dict<any>;
-    };
-}
+    }
+>;
 
 type ActorConfig = Dict<SchemaTypeConfig<any>>;
 
@@ -207,6 +209,7 @@ export class Actor extends EventEmitter {
             params,
             token,
             schemaType: "command",
+            timestamp: Date.now(),
         };
         return this.sendDocuments(`${targetUrl}/command`, [commandDoc]);
     }
