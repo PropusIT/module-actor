@@ -85,8 +85,8 @@ export class Actor extends EventEmitter {
     /**
      * registers a schematype. This creates an api endpoint on the actor where
      * documents of that schematype can be sent to.
-     * @param schemaType 
-     * @param config 
+     * @param schemaType
+     * @param config
      */
     public register<D extends SchemaType>(
         schemaType: D["schemaType"],
@@ -106,7 +106,9 @@ export class Actor extends EventEmitter {
         this.register<Command>("command", {
             onIncoming: (commandDocuments, self) => {
                 console.log("incoming commands", commandDocuments.length);
-                commandDocuments.forEach((document) => this.emit("command", document));
+                commandDocuments.forEach((document) =>
+                    this.emit("command", document)
+                );
             },
             persist: false,
             webhook: true,
@@ -116,16 +118,16 @@ export class Actor extends EventEmitter {
     /**
      * registers an event handler to incoming subscription commands. These are commands
      * of type `subscribe`, called subscriptions.
-     * 
+     *
      * if the subscription has the `hydrate` option set to a function, it is called
      * when the subscription arrives. The function should return an array of documents
      * which are then sent to the subscription endpoint
-     * 
+     *
      * when new documents are received, they are also relayed to the subscriptions,
      * if the query matches
-     * 
-     * @param schemaType 
-     * @param options 
+     *
+     * @param schemaType
+     * @param options
      */
     public registerSubscriptionHandler<D extends SchemaType = SchemaType>(
         schemaType: string,
