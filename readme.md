@@ -4,15 +4,15 @@ Actor module, handling actor communication and subscriptions
 
 to use as module in a project:
 
-- add local `.npmrc` file and supply your auth token:
-- add `.npmrc` to your `gitignore` file (never put auth tokens in version control)
+-   add local `.npmrc` file and supply your auth token:
+-   add `.npmrc` to your `gitignore` file (never put auth tokens in version control)
 
 ```
 //npm.pkg.github.com/:_authToken=[auth token]
-registry=https://npm.pkg.github.com/propusit 
+registry=https://npm.pkg.github.com/propusit
 ```
 
-- npm install @propusit/module-actor
+-   npm install @propusit/module-actor
 
 # usage
 
@@ -44,7 +44,15 @@ register an event listener. One such event is the "command" event as command doc
 
 ## `subscribe`
 
-subscribe as a webhook to another actor. That other actor will send documents to own endpoints. If there is a command actor, there is no need to find out to which actor to subscribe, unless you have one in mind specifically, as the command actor will relay the subscription
+subscribe as a webhook to another actor. That other actor will send documents to own endpoints. If there is a command actor, there is no need to find out to which actor to subscribe, unless you have one in mind specifically, as the command actor will relay the subscription. Arguments:
+
+-   `targetUrl`: url of the actor to subscribe to, typically the command actor, so `http://localhost:4001/actor`
+-   `schemaType`: the schemaType you are interested in, typically commands, so `command`
+-   `params`: optional subscription parameters:
+    -   `hydrate`: boolean to tell the source you are interested in receiving already stored documents. The source may decide what to do with it
+    -   `throttle`: throttle number for the source, may be used on hydrate
+    -   `maxSize`: max size number for the source, may be used on hydrate
+    -   `query`: any mingo query, only documents are sent that match the query
 
 # Actor communication
 
@@ -52,7 +60,7 @@ All actors have endpoints for schematypes they can handle. Example is the Comman
 
 A `POST` to `/actor/command` sends a command document to the server. Any actor may choose to persist these. In case of the Command Actor, it does not, as commands are ephemeral.
 
-Any actor can implement a `/actor/command` endpoint if they which, but that would require all actors to know of each others existence. This is the raison d'etre for the Command Actor.
+Any actor can implement a `/actor/command` endpoint if they wish, but that would require all actors to know of each others existence. This is the raison d'etre for the Command Actor.
 
 Rather than hardcoding all actor endpoints, actors can send a `subscribe` command to the Command Actor. The `subscribe` command has the following interface:
 
@@ -142,11 +150,15 @@ followed https://www.twilio.com/blog/2017/06/writing-a-node-module-in-typescript
 
 # version history
 
+## 1.2.0
+
+-   extracted relayToAllSubscriptions method
+
 ## 1.1.0
 
-- added functional `hydrate` option to `registerSubscriptionHandler`. When this flag is set, the function is called on an incoming subscription. The function is expected to return an array of documents (possibly async) which are then sent to the subscriber.
-- extracted sendCommand method
+-   added functional `hydrate` option to `registerSubscriptionHandler`. When this flag is set, the function is called on an incoming subscription. The function is expected to return an array of documents (possibly async) which are then sent to the subscriber.
+-   extracted sendCommand method
 
 ## 1.0.0
 
-- initial release
+-   initial release
