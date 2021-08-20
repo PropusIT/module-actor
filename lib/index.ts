@@ -61,13 +61,8 @@ export class Actor extends EventEmitter {
             const schemaConfig = this.config[schematype];
             router.post(`/${schematype}`, async (req, res) => {
                 const docs = req.body as SchemaType[];
-                const endpoints = Object.keys(this.subscriptions);
-                endpoints.forEach((endpoint) => {
-                    const subscription = this.subscriptions[endpoint];
-                    if (schematype === subscription.params.schemaType) {
-                        this.relayToSubscription(docs, subscription);
-                    }
-                });
+                this.relayToAllSubscriptions(docs, schematype);
+
                 if (schemaConfig.onIncoming) {
                     const result = await schemaConfig.onIncoming(docs, this);
                     res.json(result || null);
@@ -158,6 +153,19 @@ export class Actor extends EventEmitter {
     public handleSubscription(document: SubscribeCommand) {
         this.subscriptions[document.params.webhook] = document;
         this.emit("subscription", document);
+    }
+
+    public relayToAllSubscriptions(
+        documents: SchemaType[],
+        schematype: string
+    ) {
+        const endpoints = Object.keys(this.subscriptions);
+        endpoints.forEach((endpoint) => {
+            const subscription = this.subscriptions[endpoint];
+            if (schematype === subscription.params.schemaType) {
+                this.relayToSubscription(documents, subscription);
+            }
+        });
     }
 
     public relayToSubscription(
