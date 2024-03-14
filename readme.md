@@ -34,6 +34,25 @@ server.use(mountpoint, actor.middleware);
 
 registers a schemaType, give it a callback to handle incoming documents (for example to store them in a database). When the allowSubscibe flag is set, it allows incoming subscription commands to that schemaType (if the command handler is registered)
 
+this registers a post endpoint on the middleware.
+If the allowSubscribe flag is true, the documents are relayed to any subscribers
+If an onIncoming handler is specified, it is called with the incoming documents
+
+```js
+actor.register("form", {
+    onIncoming: (document) => {
+        console.log("incoming form");
+        // store locally
+    },
+    allowSubscribe: true, // also listen to incoming subscriptions on forms
+});
+```
+
+-   the `onIncoming` handler receives incoming documents. This is where you do someting with them
+-   the `webhook` flag is not used
+-   the `persist` flag is not used
+-   the `allowSubscribe` flag allows subscribers to receive copies of the incoming documents
+
 ## `registerCommandHandler`
 
 registers the command handler. This creates an endpoint for commands and emits a `command` event when commands are received. It calls `register` under the hood. This is automatically called when an Actor is created.
@@ -53,6 +72,7 @@ subscribe as a webhook to another actor. That other actor will send documents to
     -   `throttle`: throttle number for the source, may be used on hydrate
     -   `maxSize`: max size number for the source, may be used on hydrate
     -   `query`: any mingo query, only documents are sent that match the query
+    -   `webhook`: webhook you want to receive documents on, defaults to `{mountpoint}/{schemaType}`
 
 # Actor communication
 
@@ -127,6 +147,7 @@ actor.register("form", {
         // store locally
     },
     webhook: true,
+    persist: false,
     allowSubscribe: true, // also listen to incoming subscriptions on forms
 });
 ```
