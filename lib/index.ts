@@ -185,21 +185,19 @@ export class Actor extends EventEmitter {
 
     public sendDocuments(targetUrl: string, documents: SchemaType[]) {
         console.log("send to ", targetUrl);
-        try {
-            return fetch(targetUrl, {
-                body: JSON.stringify(documents),
-                headers: {
-                    "content-type": "application/json",
-                },
-                method: "POST",
-            });
-        } catch (e) {
+        return fetch(targetUrl, {
+            body: JSON.stringify(documents),
+            headers: {
+                "content-type": "application/json",
+            },
+            method: "POST",
+        }).catch((e) => {
             console.log(
                 "ACTOR WARNING: could not send documents to",
                 targetUrl,
                 e
             );
-        }
+        });
     }
 
     /**
