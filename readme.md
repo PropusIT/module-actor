@@ -24,9 +24,10 @@ const actor = new Actor({
 });
 ```
 
-then use in express server
+then use in express server. Note: the express server should properly parse a json body using `body-parser`
 
 ```typescript
+server.use(bodyParser.json());
 server.use(mountpoint, actor.middleware);
 ```
 
@@ -164,6 +165,10 @@ actor.subscribe(commandServer, "command", {
     query: { command: "subscribe", "params.schemaType": "form" },
 });
 ```
+
+## sending data to subscribers
+
+Use the `relayToSubscriptions` method to send documents to all subscribers matching a particular schema type
 
 # project setup
 
