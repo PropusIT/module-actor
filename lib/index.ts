@@ -159,7 +159,12 @@ export class Actor extends EventEmitter {
         this.emit("subscription", document);
     }
 
-    private relayToAllSubscriptions(
+    /**
+     * sends the provided documents to all subscriptions that are subscribed on the given schematype
+     * @param documents
+     * @param schematype
+     */
+    public relayToAllSubscriptions(
         documents: SchemaType[],
         schematype: string
     ) {
@@ -172,7 +177,13 @@ export class Actor extends EventEmitter {
         });
     }
 
-    private async relayToSubscription(
+    /**
+     * sends the provided documents to the given subscription, taking the subscription's query into account
+     * @param documents
+     * @param subscription
+     * @returns
+     */
+    public async relayToSubscription(
         documents: SchemaType[],
         subscription: SubscribeCommand
     ) {
