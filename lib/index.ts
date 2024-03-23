@@ -154,12 +154,12 @@ export class Actor extends EventEmitter {
         return this.config;
     }
 
-    public handleSubscription(document: SubscribeCommand) {
+    private handleSubscription(document: SubscribeCommand) {
         this.subscriptions[document.params.webhook] = document;
         this.emit("subscription", document);
     }
 
-    public relayToAllSubscriptions(
+    private relayToAllSubscriptions(
         documents: SchemaType[],
         schematype: string
     ) {
@@ -172,7 +172,7 @@ export class Actor extends EventEmitter {
         });
     }
 
-    public relayToSubscription(
+    private async relayToSubscription(
         documents: SchemaType[],
         subscription: SubscribeCommand
     ) {
