@@ -178,25 +178,26 @@ export class Actor extends EventEmitter {
     ) {
         const query = new Mingo.Query(subscription.params.query || {});
         const matching = documents.filter((doc) => query.test(doc));
+        const url = subscription.params.webhook;
         if (matching.length) {
-            return this.sendDocuments(subscription.params.webhook, matching);
+            return this.sendDocuments(url, matching).catch((e) => {
+                console.log(
+                    "ACTOR WARNING: could not relay documents to",
+                    url,
+                    e
+                );
+            });
         }
     }
 
     public sendDocuments(targetUrl: string, documents: SchemaType[]) {
-        console.log("send to ", targetUrl);
+        console.log("send", documents.length, "documents to", targetUrl);
         return fetch(targetUrl, {
             body: JSON.stringify(documents),
             headers: {
                 "content-type": "application/json",
             },
             method: "POST",
-        }).catch((e) => {
-            console.log(
-                "ACTOR WARNING: could not send documents to",
-                targetUrl,
-                e
-            );
         });
     }
 
