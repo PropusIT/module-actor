@@ -16,7 +16,7 @@ interface SubscriptionHandlerOptions<D extends SchemaType = SchemaType> {
     hydrate?: (subscription: SubscribeCommand) => D[] | Promise<D[]>;
 }
 
-interface SchemaType extends Dict<any> {
+export interface SchemaType extends Dict<any> {
     schemaType: string;
 }
 
