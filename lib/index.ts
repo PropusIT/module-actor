@@ -29,6 +29,7 @@ export interface Command<C extends string = string, P = Dict<any>>
     timestamp: number;
 }
 
+/** command to subscribe to a commands */
 export type SubscribeCommand = Command<
     "subscribe",
     {
@@ -38,6 +39,39 @@ export type SubscribeCommand = Command<
         maxSize?: number;
         hydrate?: boolean;
         query?: Dict<any>;
+    }
+>;
+
+/** generic advertise command */
+export type AdvertiseCommand<T extends string, P = Dict<any>> = Command<
+    "advertise",
+    { type: T } & {
+        [key in keyof P]: P[key];
+    }
+>;
+
+/** advertise as auth server */
+export type AdvertiseAuthCommand = AdvertiseCommand<
+    "authserver",
+    {
+        name: string;
+        logintype: "credentials" | "oauth2"; //| 'sso';
+        login: string;
+        enroll?: string;
+        logout: string;
+        prompt: string;
+    }
+>;
+
+/** advertise as data server */
+export type AdvertiseDataCommand = AdvertiseCommand<
+    "dataserver",
+    {
+        name: string;
+        endpoints: {
+            name: string;
+            url: string;
+        }[];
     }
 >;
 
