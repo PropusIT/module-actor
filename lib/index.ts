@@ -58,6 +58,7 @@ export type AdvertiseAuthCommand = AdvertiseCommand<
         logintype: "credentials" | "oauth2"; //| 'sso';
         login: string;
         enroll?: string;
+        callback?: string;
         logout: string;
         prompt: string;
     }
