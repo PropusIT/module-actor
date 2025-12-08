@@ -113,11 +113,33 @@ We have 3 actors:
 
 ## setup procedure
 
--   `F -> C` POST /actor/command: subscription to `command` schematypes on `/actor/command`
--   `A -> C` POST /actor/command: subscription to `form` schematypes on `/actor/form`
--   `C -> F` POST /actor/command: forward subscription of the `form` schematypes, since `F` is subscribed to all commands
--   `F -> A` POST /actor/form: Form Actor sends currently stored forms matching query to Aggregator
--   `F -> A` POST /actor/form: when user creates a new form, these are forwarded to the Aggregator
+In the following `C/command` is short for a url like `http://commandActorInternalName/actor/command`
+
+```mermaid
+sequenceDiagram
+
+participant C as Command actor
+participant F as Form actor
+participant A as Aggregator Actor
+
+
+F->>C: POST C/command {command: "subscribe", params: {schemaType: "command", webhook: "F/command"}}
+Note right of C: C now knows it needs to forward subscribe commands to F
+A->>C: POST C/command {command: "subscribe", params: {schemaType: "form", webhook: "A/form"}}
+Note right of C: C receives such a subscribe command and forwards it to F
+C->>F: POST F/command {command: "subscribe", params: {schemaType: "form", webhook: "A/form"}}
+Note left of F: F now registers the subscription from A and can directly send new forms to A
+F->>A: POST A/form {schemaType: "form"}
+
+
+
+```
+
+-   `F -> C` POST C/command: subscription to `command` schematypes on `C/command`
+-   `A -> C` POST C/command: subscription to `form` schematypes on `C/form`
+-   `C -> F` POST F/command: forward subscription of the `form` schematypes, since `F` is subscribed to all commands
+-   `F -> A` POST A/form: Form Actor sends currently stored forms matching query to Aggregator
+-   `F -> A` POST A/form: when user creates a new form, these are forwarded to the Aggregator
 
 # other scenarios
 
