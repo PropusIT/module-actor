@@ -31,6 +31,76 @@ server.use(bodyParser.json());
 server.use(mountpoint, actor.middleware);
 ```
 
+# glossary
+
+-   `document`: a JSON document sent between actors, having a particular `schemaType`
+-   `schemaType`: an indicator field in a `document` that defines its type uniquely
+-   `command`: a `document` of schemaType `command`
+
+# schemaTypes available in this module (which can be used by all actors)
+
+```typescript
+export interface SchemaType extends Dict<any> {
+    schemaType: string;
+}
+
+export interface Command<C extends string = string, P = Dict<any>>
+    extends SchemaType {
+    command: C;
+    params: P;
+    schemaType: "command";
+    token: string;
+    timestamp: number;
+}
+
+/** command to subscribe to a commands */
+export type SubscribeCommand = Command<
+    "subscribe",
+    {
+        webhook: string;
+        schemaType: string;
+        throttle?: number;
+        maxSize?: number;
+        hydrate?: boolean;
+        query?: Dict<any>;
+    }
+>;
+
+/** generic advertise command */
+export type AdvertiseCommand<T extends string, P = Dict<any>> = Command<
+    "advertise",
+    { type: T } & {
+        [key in keyof P]: P[key];
+    }
+>;
+
+/** advertise as auth server */
+export type AdvertiseAuthCommand = AdvertiseCommand<
+    "authserver",
+    {
+        name: string;
+        logintype: "credentials" | "oauth2"; //| 'sso';
+        login: string;
+        enroll?: string;
+        callback?: string;
+        logout: string;
+        prompt: string;
+    }
+>;
+
+/** advertise as data server */
+export type AdvertiseDataCommand = AdvertiseCommand<
+    "dataserver",
+    {
+        name: string;
+        endpoints: {
+            name: string;
+            url: string;
+        }[];
+    }
+>;
+```
+
 ## `register`
 
 registers a schemaType, give it a callback to handle incoming documents (for example to store them in a database). When the allowSubscibe flag is set, it allows incoming subscription commands to that schemaType (if the command handler is registered)
@@ -62,9 +132,13 @@ registers the command handler. This creates an endpoint for commands and emits a
 
 register an event listener. One such event is the "command" event as command documents come in
 
+## `onCommand`
+
+registers an event listener for "command" events
+
 ## `subscribe`
 
-subscribe as a webhook to another actor. That other actor will send documents to own endpoints. If there is a command actor, there is no need to find out to which actor to subscribe, unless you have one in mind specifically, as the command actor will relay the subscription. Arguments:
+subscribe as a webhook to another actor by sending a `subscribe` command document using `sendCommand`. That other actor will send documents to own endpoints. If there is a command actor, there is no need to find out to which actor to subscribe, unless you have one in mind specifically, as the command actor will relay the subscription. Arguments:
 
 -   `targetUrl`: url of the actor to subscribe to, typically the command actor, so `http://localhost:4001/actor`
 -   `schemaType`: the schemaType you are interested in, typically commands, so `command`
@@ -74,6 +148,14 @@ subscribe as a webhook to another actor. That other actor will send documents to
     -   `maxSize`: max size number for the source, may be used on hydrate
     -   `query`: any mingo query, only documents are sent that match the query
     -   `webhook`: webhook you want to receive documents on, defaults to `{mountpoint}/{schemaType}`
+
+## `sendDocuments`
+
+sends documents to the given target url
+
+## `sendCommand`
+
+sends a command document to the given target url
 
 # Actor communication
 
@@ -118,28 +200,58 @@ In the following `C/command` is short for a url like `http://commandActorInterna
 ```mermaid
 sequenceDiagram
 
-participant C as Command actor
-participant F as Form actor
-participant A as Aggregator Actor
+participant C as Command actor (C)
+participant F as Form actor (F)
+participant A as Aggregator Actor (A)
 
 
 F->>C: POST C/command {command: "subscribe", params: {schemaType: "command", webhook: "F/command"}}
-Note right of C: C now knows it needs to forward subscribe commands to F
+Note right of C: C now knows it needs to forward all commands to F
 A->>C: POST C/command {command: "subscribe", params: {schemaType: "form", webhook: "A/form"}}
-Note right of C: C receives such a subscribe command and forwards it to F
+Note right of C: C receives a subscribe command and forwards it to F
 C->>F: POST F/command {command: "subscribe", params: {schemaType: "form", webhook: "A/form"}}
-Note left of F: F now registers the subscription from A and can directly send new forms to A
+Note left of F: F now registers the subscription from A and can directly send new form documents to A
 F->>A: POST A/form {schemaType: "form"}
 
 
 
 ```
 
--   `F -> C` POST C/command: subscription to `command` schematypes on `C/command`
--   `A -> C` POST C/command: subscription to `form` schematypes on `C/form`
+-   `F -> C` POST C/command: subscription to `command` schematypes on `C/command`, using the [`actor.subscribe`](#subscribe) method
+-   `A -> C` POST C/command: subscription to `form` schematypes on `C/form`, using the [`actor.subscribe`](#subscribe) method
 -   `C -> F` POST F/command: forward subscription of the `form` schematypes, since `F` is subscribed to all commands
--   `F -> A` POST A/form: Form Actor sends currently stored forms matching query to Aggregator
--   `F -> A` POST A/form: when user creates a new form, these are forwarded to the Aggregator
+-   `F -> A` POST A/form: Form Actor sends currently stored form documents matching query to Aggregator
+-   `F -> A` POST A/form: when user creates a new form document, these are forwarded to the Aggregator
+
+## advertisements
+
+Another common command is the `advertise` command
+
+In this case, the Forms actor subscribes to `command` documents with the command type `advertise` as the query, using the [`actor.subscribe`](#subscribe) method. The query may also contain other fields, for example:
+
+```typescript
+{
+    command: "advertise",
+    "params.type": "authserver",
+    timestamp: { $gte: Date.now() - 10 * 1000 * 60 },
+},
+```
+
+The forms actor repeats this subscription every 5 minutes for robustness
+
+Any authentication actor (we have directus and auth0 at the moment) can advertise itself to the command actor using the [`actor.sendCommand`](#sendCommand) method, which the command actor then forwards to subscribers. This advertisement is repeated every 5 minutes
+
+```mermaid
+sequenceDiagram
+
+participant C as Command actor (C)
+participant D as Directus actor (D)
+participant F as Form actor (F)
+
+F->>C: POST C/command {command: "subscribe", params: {schemaType: "command", webhook: "F/command", query: ...}}
+D->>C: POST C/command {command: "advertise", params: {type: "authserver", ...}}
+C->>F: POST F/command {command: "advertise", params: {type: "authserver", ...}}
+```
 
 # other scenarios
 
