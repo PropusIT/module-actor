@@ -1,6 +1,6 @@
 {
     "name": "@propusit/module-actor",
-    "version": "1.3.9",
+    "version": "1.3.10",
     "description": "Actor module, handling actor communication and subscriptions",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
