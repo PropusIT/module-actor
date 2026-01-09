@@ -304,6 +304,50 @@ actor.subscribe(commandServer, "command", {
 
 Use the `relayToSubscriptions` method to send documents to all subscribers matching a particular schema type
 
+# I want other actors to be able to post documents to me
+
+register a schemaType:
+
+```ts
+actor.register("form", {
+    onIncoming: (document) => {
+        console.log("incoming form");
+        // store locally
+    },
+    allowSubscribe: false,
+});
+```
+
+# I want other actors to be sent a copy of incoming documents if they want to
+
+register a schemaType with the `allowSubscribe` flag:
+
+```ts
+actor.register("form", {
+    onIncoming: (document) => {
+        console.log("incoming form");
+        // store locally
+    },
+    allowSubscribe: true,
+});
+```
+
+# I want to be sent a copy of documents from another actor
+
+subscribe to a schemaType of another actor:
+
+```ts
+actor.subscribe(commandServer, "schemaType",{
+    hydrate: // boolean to tell the source you are interested in receiving already stored documents. The source may decide what to do with it
+    throttle: // throttle number for the source, may be used on hydrate
+    maxSize: // max size number for the source, may be used on hydrate
+    query: // any mingo query, only documents are sent that match the query
+    webhook: // webhook you want to receive documents on, defaults to {mountpoint}/{schemaType}
+});
+```
+
+you also need an endpoint (webhook) for the other actor to send documents to. This may be an actor endpoint (using `actor.register`) or a custom endpoint set up by express (make sure you specify the `webhook` option in that case).
+
 # project setup
 
 followed https://www.twilio.com/blog/2017/06/writing-a-node-module-in-typescript.html for project setup
@@ -322,3 +366,7 @@ followed https://www.twilio.com/blog/2017/06/writing-a-node-module-in-typescript
 ## 1.0.0
 
 -   initial release
+
+```
+
+```
