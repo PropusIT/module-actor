@@ -178,7 +178,7 @@ export class Actor extends EventEmitter {
                 subscription.params.schemaType === schemaType
             ) {
                 console.log("incoming subscription ", subscription);
-                this.handleSubscription(subscription);
+                this.storeSubscription(subscription);
                 if (options.hydrate && subscription.params.hydrate) {
                     let docs = await options.hydrate(subscription);
                     this.relayToSubscription(docs, subscription);
@@ -191,7 +191,7 @@ export class Actor extends EventEmitter {
         return this.config;
     }
 
-    private handleSubscription(document: SubscribeCommand) {
+    private storeSubscription(document: SubscribeCommand) {
         this.subscriptions[document.params.webhook] = document;
         this.emit("subscription", document);
     }
