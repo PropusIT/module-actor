@@ -302,9 +302,11 @@ actor.subscribe(commandServer, "command", {
 
 ## sending data to subscribers
 
-Use the `relayToSubscriptions` method to send documents to all subscribers matching a particular schema type
+Use the `relayToAllSubscriptions` method to send documents to all subscribers matching a particular schema type
 
-# I want other actors to be able to post documents to me
+# typical goals
+
+## I want other actors to be able to post documents to me (server)
 
 register a schemaType:
 
@@ -318,7 +320,7 @@ actor.register("form", {
 });
 ```
 
-# I want other actors to be sent a copy of incoming documents if they want to
+## I want other actors to be sent a copy of incoming documents if they want to
 
 register a schemaType with the `allowSubscribe` flag:
 
@@ -332,7 +334,7 @@ actor.register("form", {
 });
 ```
 
-# I want to be sent a copy of documents from another actor
+## I want to be sent a copy of documents from another actor (subscribe)
 
 subscribe to a schemaType of another actor:
 
@@ -347,6 +349,14 @@ actor.subscribe(commandServer, "schemaType",{
 ```
 
 you also need an endpoint (webhook) for the other actor to send documents to. This may be an actor endpoint (using `actor.register`) or a custom endpoint set up by express (make sure you specify the `webhook` option in that case).
+
+## I want to actively send documents to subscribers (push)
+
+use `relayToAllSubscriptions`
+
+```ts
+actor.relayToAllSubscriptions(documents, "schemaType");
+```
 
 # project setup
 
