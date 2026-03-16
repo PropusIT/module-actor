@@ -72,6 +72,8 @@ export type AdvertiseDataCommand = AdvertiseCommand<
         endpoints: {
             name: string;
             url: string;
+            methods?: ("get" | "put" | "post" | "delete")[];
+            params?: string[];
         }[];
     }
 >;
