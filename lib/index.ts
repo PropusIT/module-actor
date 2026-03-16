@@ -8,7 +8,7 @@ type Dict<T> = Record<string, T>;
 interface SchemaTypeConfig<D> {
     webhook: boolean;
     onIncoming: (documents: D[], actor: Actor) => any;
-    persist?: boolean;
+    // persist?: boolean;
     allowSubscribe?: boolean;
 }
 
@@ -149,7 +149,7 @@ export class Actor extends EventEmitter {
                     this.emit("command", document)
                 );
             },
-            persist: false,
+            // persist: false,
             webhook: true,
         });
     }
